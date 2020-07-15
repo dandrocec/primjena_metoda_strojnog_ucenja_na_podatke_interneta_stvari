@@ -14,7 +14,7 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import model_from_json
 import os.path
 
-modelFileName = 'KerasModelNew.json'
+modelFileName = 'KerasModelV2.json'
 
 class SensorData:
 	def __init__(self, id, mac, x1,y1,z1,x2,y2,z2, temp, isOcc, date):
@@ -180,6 +180,9 @@ def MakePrediction(model, dataForPrediction):
 		elif (float(p) <= float(0.65) and statusParkinga == 0):
 			tocno+=1
 		elif (float(p) > float(0.65) and statusParkinga == 0):
+			netocno+=1
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
+		elif (float(p) < float(0.65) and statusParkinga == 1):
 			netocno+=1
 			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
 

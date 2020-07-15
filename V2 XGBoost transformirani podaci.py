@@ -174,6 +174,9 @@ def MakePrediction(model, dataForPrediction):
 		elif (float(p) > float(0.65) and statusParkinga == 0):
 			netocno+=1
 			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
+		elif (float(p) < float(0.65) and statusParkinga == 1):
+			netocno+=1
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
 
 	print(tocno)
 	print(netocno)
