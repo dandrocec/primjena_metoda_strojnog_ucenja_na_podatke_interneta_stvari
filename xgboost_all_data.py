@@ -1,3 +1,4 @@
+# Imports
 from xgboost import XGBClassifier
 import csv
 import joblib
@@ -19,8 +20,6 @@ import csv
 import numpy as np
 import pandas as pd
 import os.path
-
-modelFileName = 'KerasModelNew.json'
 
 class MyXGBClassifier(XGBClassifier):
 	@property
@@ -116,9 +115,9 @@ def MakePrediction(model, dataForPrediction):
 		else:
 			TotalOK+=1
 
-	model.get_booster().feature_names = ["X1", "Y1", "Z1", "X2", "Y2", "Z2", "Temperature", "Vector diff", "Sum XYZ"]
-	plot_importance(model.get_booster())
-	plt.show()
+	#model.get_booster().feature_names = ["X1", "Y1", "Z1", "X2", "Y2", "Z2", "Temperature", "Vector diff", "Sum XYZ"]
+	#plot_importance(model.get_booster())
+	#plt.show()
 
 	print("Total OK: %d" % TotalOK)
 	print("Total error: %d" % TotalError)
@@ -131,9 +130,11 @@ def main():
 	#load data from CSV file
 	rowDataFromSensors = LoadDataFromCsvFile()
 	# prepare data for Keras model train
-	dataForModelTrain = rowDataFromSensors[:10000]
+	dataForModelTrain = rowDataFromSensors[:90000]
+	print(len(dataForModelTrain))
 	# rest of the data will be for prediction
 	dataForPrediction = rowDataFromSensors[90000:]
+	print(len(dataForPrediction))
 	#prepare model
 	model = PrepareXGBoostModel(dataForModelTrain)
 	#make XGBoost prediction

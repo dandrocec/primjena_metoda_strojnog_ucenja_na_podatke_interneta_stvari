@@ -1,3 +1,4 @@
+# Imports
 from xgboost import XGBClassifier
 import csv
 import joblib
@@ -21,8 +22,6 @@ import csv
 import numpy as np
 import pandas as pd
 import os.path
-
-modelFileName = 'KerasModelNew.json'
 
 class MyXGBClassifier(XGBClassifier):
 	@property
@@ -186,13 +185,13 @@ def main():
 		proggressForDataTransform+=1
 		
 		# just for test
-		if(len(transformedData) > 2000):
-			break
+		#if(len(transformedData) > 2000):
+		#	break
 	
 	# prepare data for Keras model train
-	dataForModelTrain = transformedData[:500]
+	dataForModelTrain = transformedData[:90000]
 	# rest of the data will be for prediction
-	dataForPrediction = transformedData[1500:]
+	dataForPrediction = transformedData[90000:]
 	#prepare model
 	model = PrepareXGBoostModel(dataForModelTrain)
 	#make XGBoost prediction

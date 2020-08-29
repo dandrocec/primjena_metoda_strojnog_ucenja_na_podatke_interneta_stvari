@@ -1,3 +1,4 @@
+# Imports
 import numpy
 import matplotlib.pyplot as plt
 from pandas import read_csv
@@ -14,7 +15,7 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import model_from_json
 import os.path
 
-modelFileName = 'KerasModelV2.json'
+modelFileName = 'KerasModelTansData.json'
 
 class SensorData:
 	def __init__(self, id, mac, x1,y1,z1,x2,y2,z2, temp, isOcc, date):
@@ -99,7 +100,7 @@ def PrepareKerasModel(dataForModelTrain):
 		json_file.close()
 		loaded_model = model_from_json(loaded_model_json)
 		# load weights into new model
-		loaded_model.load_weights("KerasModelNew.h5")
+		loaded_model.load_weights("KerasModelTansData.h5")
 		print("Model prepared, loaded from disk")
 		return loaded_model
 	else:
@@ -220,13 +221,13 @@ def main():
 		proggressForDataTransform+=1
 		
 		#just for test
-		if(len(transformedData) > 2000):
-			break
+		#if(len(transformedData) > 2000):
+		#	break
 	
 	# prepare data for Keras model train
-	dataForModelTrain = transformedData[:1500]
+	dataForModelTrain = transformedData[:90000]
 	# rest of the data will be for prediction
-	dataForPrediction = transformedData[1500:]
+	dataForPrediction = transformedData[90000:]
 
 	model = PrepareKerasModel(dataForModelTrain)
 

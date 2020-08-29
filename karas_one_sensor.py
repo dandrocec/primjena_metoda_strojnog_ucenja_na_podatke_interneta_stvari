@@ -1,3 +1,4 @@
+# Imports
 import numpy
 import matplotlib.pyplot as plt
 from pandas import read_csv
@@ -14,7 +15,8 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import model_from_json
 import os.path
 
-modelFileName = 'KerasModelNew.json'
+modelFileName = 'KerasModelOneSensor.json'
+modelFileNameH5 = 'KerasModelOneSensor.h5'
 
 class SensorData:
 	def __init__(self, id, mac, x1,y1,z1,x2,y2,z2, temp, isOcc, date):
@@ -54,7 +56,7 @@ def PrepareKerasModel(dataForModelTrain):
 		json_file.close()
 		loaded_model = model_from_json(loaded_model_json)
 		# load weights into new model
-		loaded_model.load_weights("KerasModelNew.h5")
+		loaded_model.load_weights(modelFileNameH5)
 		print("Model prepared, loaded from disk")
 		return loaded_model
 	else:
@@ -85,7 +87,7 @@ def PrepareKerasModel(dataForModelTrain):
 		model_json = model.to_json()
 		with open(modelFileName, "w") as json_file:
 			json_file.write(model_json)
-			model.save_weights("KerasModelNew.h5")
+			model.save_weights(modelFileNameH5)
 			print("Model saved.")
 
 		return model
@@ -112,8 +114,8 @@ def LoadDataFromCsvFile():
 		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, statusParkinga, date)
 		data.append(sd)
 		# for test
-		if(len(data)>2000):
-			break
+		#if(len(data)>2000):
+		#	break
 	return data;
 
 def MakePrediction(model, dataForPrediction):
@@ -127,7 +129,7 @@ def MakePrediction(model, dataForPrediction):
 		trainPredict = model.predict(testX)
 
 		p = float(trainPredict[0][0])
-		print("Parking event: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
+		#print("Parking event: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
 		
 		if(float(p) > float(0.50) and statusParkinga == 1):
 			TotalOK+=1
@@ -154,17 +156,13 @@ def main():
 	rowDataFromSensors = LoadDataFromCsvFile()
 
 	# prepare data for Keras model train
-	dataForModelTrain = rowDataFromSensors[:1500]
+	dataForModelTrain = rowDataFromSensors[:15000]
 	# rest of the data will be for prediction
-	dataForPrediction = rowDataFromSensors[1500:]
-
+	dataForPrediction = rowDataFromSensors[15000:]
+	#prepare model
 	model = PrepareKerasModel(dataForModelTrain)
-
+	#make prediction
 	MakePrediction(model, dataForPrediction)
-
-	#np_array = np.array(transformedData)
-	#pd.DataFrame(np_array).to_csv("temp_nbps.csv")
-
 
 if __name__=="__main__": 
     main()
