@@ -55,11 +55,14 @@ class VectorData:
 		self.y1 = y1
 		self.z1 = z1
 
+"""
+Create or load XGBoost model
+"""
 def PrepareXGBoostModel(dataForModelTrain):
 	trainX = []
 	trainY = []
 	for d in dataForModelTrain:
-		statusParkinga = int(d.isOcc)
+		parkingStatus = int(d.isOcc)
 		x1 = int(d.x1)
 		y1 = int(d.y1)
 		z1 = int(d.z1)
@@ -67,10 +70,10 @@ def PrepareXGBoostModel(dataForModelTrain):
 		y2 = int(d.y2)
 		z2 = int(d.z2)
 		temp = int(d.temp)
-		razlikaVektora = x1 - x2 + y1 - y2 + z1 - z2
+		vectorDiff = x1 - x2 + y1 - y2 + z1 - z2
 		zbrojXYZ = x1+y1+z1
-		trainX.append([x1, y1, z1, x2, y2, z2, temp, razlikaVektora, zbrojXYZ])
-		trainY.append(statusParkinga)
+		trainX.append([x1, y1, z1, x2, y2, z2, temp, vectorDiff, zbrojXYZ])
+		trainY.append(parkingStatus)
 	trainX = numpy.array(trainX)
 	trainY = numpy.array(trainY)
 	model = MyXGBClassifier(max_depth=8, n_estimators=150, learning_rate=0.3)
@@ -78,15 +81,16 @@ def PrepareXGBoostModel(dataForModelTrain):
 	print(model)
 	return model
 
-
-
+"""
+Load data from .csv file, and return object with values
+"""
 def LoadDataFromCsvFile():
 	data = []
 	reader = csv.reader(open('data/vector_data_nbps.csv', 'r'), delimiter=';')
 	# skip columns name
 	next(reader)
 	for row in reader:
-		statusParkinga = int(row[15])
+		parkingStatus = int(row[15])
 		sensor_id = int(row[0])
 		mac = row[16]
 		x1 = float(row[5])
@@ -97,18 +101,21 @@ def LoadDataFromCsvFile():
 		z2 = float(row[10])
 		temp = float(row[12])
 		date = row[1]
-		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, statusParkinga, date)
+		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, parkingStatus, date)
 		data.append(sd)
 	return data;
 
+"""
+Test XGBoost prediction and calculate accuracy
+"""
 def MakePrediction(model, dataForPrediction):
 	i=0
 	TotalOK=0
 	TotalError=0
 	for dp in dataForPrediction:
-		razlikaVektora = dp.x1 - dp.x2 + dp.y1 - dp.y2 + dp.z1 - dp.z2
-		zbrojXYZ = dp.x1+dp.y1+dp.z1
-		testX = numpy.array([[dp.x1,dp.y1,dp.z1,dp.x2,dp.y2,dp.z2,dp.temp, razlikaVektora, zbrojXYZ]])
+		vectorDiff = dp.x1 - dp.x2 + dp.y1 - dp.y2 + dp.z1 - dp.z2
+		sumXYZ = dp.x1+dp.y1+dp.z1
+		testX = numpy.array([[dp.x1,dp.y1,dp.z1,dp.x2,dp.y2,dp.z2,dp.temp, vectorDiff, sumXYZ]])
 		predikcija = model.predict(testX)
 		if(predikcija != dp.isOcc):
 			TotalError+=1

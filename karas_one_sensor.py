@@ -47,7 +47,9 @@ class VectorData:
 		self.y1 = y1
 		self.z1 = z1
 
-
+"""
+Create or load Keras model
+"""
 def PrepareKerasModel(dataForModelTrain):
 
 	if os.path.isfile(modelFileName):
@@ -64,10 +66,10 @@ def PrepareKerasModel(dataForModelTrain):
 		trainY = []
 
 		for d in dataForModelTrain:
-			statusParkinga = int(d.isOcc)
-			razlikaVektora = d.x1 - d.x2 + d.y1 - d.y2 + d.z1 - d.z2
-			trainX.append([d.x1, d.y1, d.z1, d.x2, d.y2, d.z2, d.temp, razlikaVektora])
-			trainY.append(statusParkinga)
+			parkingStatus = int(d.isOcc)
+			vectorDiff = d.x1 - d.x2 + d.y1 - d.y2 + d.z1 - d.z2
+			trainX.append([d.x1, d.y1, d.z1, d.x2, d.y2, d.z2, d.temp, vectorDiff])
+			trainY.append(parkingStatus)
 
 		trainX = numpy.array(trainX)
 		trainY = numpy.array(trainY)
@@ -77,7 +79,7 @@ def PrepareKerasModel(dataForModelTrain):
 		model.add(LSTM(50, return_sequences=True, input_shape=(1, 8)))
 		model.add(LSTM(50))
 		model.add(Dense(10))
-		model.add(Dropout(0.3))
+		#model.add(Dropout(0.3))
 		model.add(Dense(1))
 		model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
 		model.fit(trainX, trainY, epochs=10, batch_size=1, verbose=2)
@@ -92,15 +94,16 @@ def PrepareKerasModel(dataForModelTrain):
 
 		return model
 
-
-
+"""
+Load data from .csv file, and return object with values
+"""
 def LoadDataFromCsvFile():
 	data = []
 	reader = csv.reader(open('data/vector_data_nbps_one_sensor.csv', 'r'), delimiter=';')
 	# skip columns name
 	next(reader)
 	for row in reader:
-		statusParkinga = int(row[15])
+		parkingStatus = int(row[15])
 		sensor_id = int(row[0])
 		mac = row[16]
 		x1 = float(row[5])
@@ -111,39 +114,36 @@ def LoadDataFromCsvFile():
 		z2 = float(row[10])
 		temp = float(row[12])
 		date = row[1]
-		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, statusParkinga, date)
+		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, parkingStatus, date)
 		data.append(sd)
-		# for test
-		#if(len(data)>2000):
-		#	break
 	return data;
 
+"""
+Test Keras prediction and calculate accuracy
+"""
 def MakePrediction(model, dataForPrediction):
-	i=0
 	TotalOK=0;
 	TotalError=0
 	for dp in dataForPrediction:
-		statusParkinga = int(dp.isOcc)
-		razlikaVektora = dp.x1 - dp.x2 + dp.y1 - dp.y2 + dp.z1 - dp.z2
-		testX = numpy.array([[[dp.x1, dp.y1, dp.z1, dp.x2, dp.y2, dp.z2, dp.temp, razlikaVektora]]])
+		parkingStatus = int(dp.isOcc)
+		vectorDiff = dp.x1 - dp.x2 + dp.y1 - dp.y2 + dp.z1 - dp.z2
+		testX = numpy.array([[[dp.x1, dp.y1, dp.z1, dp.x2, dp.y2, dp.z2, dp.temp, vectorDiff]]])
 		trainPredict = model.predict(testX)
-
 		p = float(trainPredict[0][0])
-		#print("Parking event: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
 		
-		if(float(p) > float(0.65) and statusParkinga == 1):
+		if(float(p) > float(0.60) and parkingStatus == 1):
 			TotalOK+=1
-		elif (float(p) > float(0.65) and statusParkinga == 0):
+		elif (float(p) > float(0.60) and parkingStatus == 0):
 			TotalError+=1
-			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
-		elif (float(p) <= float(0.65) and statusParkinga == 0):
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
+		elif (float(p) <= float(0.60) and parkingStatus == 0):
 			TotalOK+=1
-		elif (float(p) > float(0.65) and statusParkinga == 0):
+		elif (float(p) > float(0.60) and parkingStatus == 0):
 			TotalError+=1
-			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
-		elif (float(p) < float(0.65) and statusParkinga == 1):
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
+		elif (float(p) < float(0.60) and parkingStatus == 1):
 			TotalError+=1
-			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
 
 	print("Total OK: %d" % TotalOK)
 	print("Total error: %d" % TotalError)

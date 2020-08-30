@@ -58,7 +58,7 @@ class VectorData:
 		self.z1 = z1
 
 """
-Funkcija trazi i vraca najcesce vektorske vrijednosti iz danog dataseta
+The function searches and returns the most common vector values from a given dataset
 """
 def SearchForMostCommonValues(dataset, limitForSimilarValue):
 
@@ -92,28 +92,30 @@ def SearchForMostCommonValues(dataset, limitForSimilarValue):
 	return VectorData(mostCommonValueX, mostCommonValueY, mostCommonValueZ);
 
 """
-Funkcija vraca n podataka koji zadovaoljavaju MAC adresu senzora i priblizni su trazenoj temperaturi
+Search data by MAC and by temperature
 """
 def SearchByMacAndTemperature(mac, temperature, dataset, top):
 	tData = []
-	#dataset2 = dataset.sort(key = lambda c: c.date) TODO
 	for d in dataset:
 		if d.mac == mac and abs(temperature - d.temp) < 5 and len(tData) < top:
 			tData.append(d)
 
 	return tData
 
+"""
+Create or load XGBoost model
+"""
 def PrepareXGBoostModel(dataForModelTrain):
 	trainX = []
 	trainY = []
 
 	for d in dataForModelTrain:
-		statusParkinga = float(d.isOcc)
+		parkingStatus = float(d.isOcc)
 		x1 = float(d.x1)
 		y1 = float(d.y1)
 		z1 = float(d.z1)
 		trainX.append([x1, y1, z1])
-		trainY.append(statusParkinga)
+		trainY.append(parkingStatus)
 
 	trainX = numpy.array(trainX)
 	trainY = numpy.array(trainY)
@@ -123,15 +125,16 @@ def PrepareXGBoostModel(dataForModelTrain):
 	print(model)
 	return model
 
-
-
+"""
+Load data from .csv file, and return object with values
+"""
 def LoadDataFromCsvFile():
 	data = []
 	reader = csv.reader(open('data/vector_data_nbps.csv', 'r'), delimiter=';')
 	# skip columns name
 	next(reader)
 	for row in reader:
-		statusParkinga = int(row[15])
+		parkingStatus = int(row[15])
 		sensor_id = int(row[0])
 		mac = row[16]
 		x1 = float(row[5])
@@ -142,10 +145,13 @@ def LoadDataFromCsvFile():
 		z2 = float(row[10])
 		temp = float(row[12])
 		date = row[1]
-		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, statusParkinga, date)
+		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, parkingStatus, date)
 		data.append(sd)
 	return data;
 
+"""
+Test XGBoost prediction and calculate accuracy
+"""
 def MakePrediction(model, dataForPrediction):
 	i=0
 	TotalOK=0

@@ -47,7 +47,9 @@ class VectorData:
 		self.y1 = y1
 		self.z1 = z1
 
-
+"""
+Create or load Keras model
+"""
 def PrepareKerasModel(dataForModelTrain):
 
 	if os.path.isfile(modelFileName):
@@ -64,10 +66,10 @@ def PrepareKerasModel(dataForModelTrain):
 		trainY = []
 
 		for d in dataForModelTrain:
-			statusParkinga = float(d.isOcc)
-			razlikaVektora = d.x1 - d.x2 + d.y1 - d.y2 + d.z1 - d.z2
-			trainX.append([d.x1, d.y1, d.z1, d.x2, d.y2, d.z2, d.temp, razlikaVektora])
-			trainY.append(statusParkinga)
+			parkingStatus = float(d.isOcc)
+			vectorDiff = d.x1 - d.x2 + d.y1 - d.y2 + d.z1 - d.z2
+			trainX.append([d.x1, d.y1, d.z1, d.x2, d.y2, d.z2, d.temp, vectorDiff])
+			trainY.append(parkingStatus)
 
 		trainX = numpy.array(trainX)
 		trainY = numpy.array(trainY)
@@ -92,6 +94,9 @@ def PrepareKerasModel(dataForModelTrain):
 
 		return model
 
+"""
+Load data from .csv file, and return object with values
+"""
 def LoadDataFromCsvFile():
 	data = []
 	reader = csv.reader(open('data/vector_data_nbps.csv', 'r'), delimiter=';')
@@ -111,37 +116,37 @@ def LoadDataFromCsvFile():
 		date = row[1]
 		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, statusParkinga, date)
 		data.append(sd)
-		# for test
-		#if(len(data)>2000):
-		#	break
 	return data;
 
+"""
+Test Keras prediction and calculate accuracy
+"""
 def MakePrediction(model, dataForPrediction):
 	i=0
 	TotalOK=0;
 	TotalError=0
 	for dp in dataForPrediction:
-		statusParkinga = int(dp.isOcc)
-		razlikaVektora = dp.x1 - dp.x2 + dp.y1 - dp.y2 + dp.z1 - dp.z2
-		testX = numpy.array([[[dp.x1, dp.y1, dp.z1, dp.x2, dp.y2, dp.z2, dp.temp, razlikaVektora]]])
+		parkingStatus = int(dp.isOcc)
+		vectorDiff = dp.x1 - dp.x2 + dp.y1 - dp.y2 + dp.z1 - dp.z2
+		testX = numpy.array([[[dp.x1, dp.y1, dp.z1, dp.x2, dp.y2, dp.z2, dp.temp, vectorDiff]]])
 		trainPredict = model.predict(testX)
 
 		p = float(trainPredict[0][0])
 		#print("Parking event: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
 		
-		if(float(p) > float(0.50) and statusParkinga == 1):
+		if(float(p) > float(0.50) and parkingStatus == 1):
 			TotalOK+=1
-		elif (float(p) > float(0.50) and statusParkinga == 0):
+		elif (float(p) > float(0.50) and parkingStatus == 0):
 			TotalError+=1
-			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
-		elif (float(p) <= float(0.50) and statusParkinga == 0):
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
+		elif (float(p) <= float(0.50) and parkingStatus == 0):
 			TotalOK+=1
-		elif (float(p) > float(0.50) and statusParkinga == 0):
+		elif (float(p) > float(0.50) and parkingStatus == 0):
 			TotalError+=1
-			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
-		elif (float(p) < float(0.50) and statusParkinga == 1):
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
+		elif (float(p) < float(0.50) and parkingStatus == 1):
 			TotalError+=1
-			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
 
 	print("Total OK: %d" % TotalOK)
 	print("Total error: %d" % TotalError)
@@ -152,13 +157,11 @@ def main():
 	proggressForDataTransform = 1
 	transformedData = []
 	rowDataFromSensors = LoadDataFromCsvFile()
-	print(len(rowDataFromSensors))
 	# prepare data for Keras model train
 	dataForModelTrain = rowDataFromSensors[:90000]
 	print(len(dataForModelTrain))
 	# rest of the data will be for prediction
 	dataForPrediction = rowDataFromSensors[90000:]
-	print(len(dataForPrediction))
 	#prepare model
 	model = PrepareKerasModel(dataForModelTrain)
 	#make prediction

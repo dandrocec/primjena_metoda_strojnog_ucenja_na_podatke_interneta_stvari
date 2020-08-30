@@ -47,7 +47,7 @@ class VectorData:
 		self.z1 = z1
 
 """
-Funkcija trazi i vraca najcesce vektorske vrijednosti iz danog dataseta
+The function searches and returns the most common vector values from a given dataset
 """
 def SearchForMostCommonValues(dataset, limitForSimilarValue):
 
@@ -81,17 +81,19 @@ def SearchForMostCommonValues(dataset, limitForSimilarValue):
 	return VectorData(mostCommonValueX, mostCommonValueY, mostCommonValueZ);
 
 """
-Funkcija vraca n podataka koji zadovaoljavaju MAC adresu senzora i priblizni su trazenoj temperaturi
+Search data by MAC and by temperature
 """
 def SearchByMacAndTemperature(mac, temperature, dataset, top):
 	tData = []
-	#dataset2 = dataset.sort(key = lambda c: c.date)
 	for d in dataset:
 		if d.mac == mac and abs(temperature - d.temp) < 5 and len(tData) < top:
 			tData.append(d)
 
 	return tData
 
+"""
+Create or load Keras model
+"""
 def PrepareKerasModel(dataForModelTrain):
 
 	if os.path.isfile(modelFileName):
@@ -108,12 +110,12 @@ def PrepareKerasModel(dataForModelTrain):
 		trainY = []
 
 		for d in dataForModelTrain:
-			statusParkinga = float(d.isOcc)
+			parkingStatus = float(d.isOcc)
 			x1 = float(d.x1)
 			y1 = float(d.y1)
 			z1 = float(d.z1)
 			trainX.append([x1, y1, z1])
-			trainY.append(statusParkinga)
+			trainY.append(parkingStatus)
 
 		trainX = numpy.array(trainX)
 		trainY = numpy.array(trainY)
@@ -138,15 +140,16 @@ def PrepareKerasModel(dataForModelTrain):
 
 		return model
 
-
-
+"""
+Load data from .csv file, and return object with values
+"""
 def LoadDataFromCsvFile():
 	data = []
 	reader = csv.reader(open('data/vector_data_nbps.csv', 'r'), delimiter=';')
 	# skip columns name
 	next(reader)
 	for row in reader:
-		statusParkinga = int(row[15])
+		parkingStatus = int(row[15])
 		sensor_id = int(row[0])
 		mac = row[16]
 		x1 = float(row[5])
@@ -157,35 +160,38 @@ def LoadDataFromCsvFile():
 		z2 = float(row[10])
 		temp = float(row[12])
 		date = row[1]
-		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, statusParkinga, date)
+		sd = SensorData(sensor_id, mac, x1, y1, z1, x2, y2, z2, temp, parkingStatus, date)
 		data.append(sd)
 	return data;
 
+"""
+Test Keras prediction and calculate accuracy
+"""
 def MakePrediction(model, dataForPrediction):
 	i=0
 	TotalOK=0;
 	TotalError=0
 	for dp in dataForPrediction:
-		statusParkinga = int(dp.isOcc)
+		parkingStatus = int(dp.isOcc)
 		testX = numpy.array([[[dp.x1,dp.y1,dp.z1]]])
 		trainPredict = model.predict(testX)
 
 		p = float(trainPredict[0][0])
-		print("Parking event: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
+		print("Parking event: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
 		
-		if(float(p) > float(0.65) and statusParkinga == 1):
+		if(float(p) > float(0.65) and parkingStatus == 1):
 			TotalOK+=1
-		elif (float(p) > float(0.65) and statusParkinga == 0):
+		elif (float(p) > float(0.65) and parkingStatus == 0):
 			TotalError+=1
-			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
-		elif (float(p) <= float(0.65) and statusParkinga == 0):
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
+		elif (float(p) <= float(0.65) and parkingStatus == 0):
 			TotalOK+=1
-		elif (float(p) > float(0.65) and statusParkinga == 0):
+		elif (float(p) > float(0.65) and parkingStatus == 0):
 			TotalError+=1
-			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
-		elif (float(p) < float(0.65) and statusParkinga == 1):
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
+		elif (float(p) < float(0.65) and parkingStatus == 1):
 			TotalError+=1
-			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
+			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, parkingStatus, p))
 
 	print("Total OK: %d" % TotalOK)
 	print("Total error: %d" % TotalError)
