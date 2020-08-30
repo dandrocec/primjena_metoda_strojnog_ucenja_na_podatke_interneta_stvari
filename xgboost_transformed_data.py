@@ -183,10 +183,6 @@ def main():
 		if(proggressForDataTransform % 100 == 0):
 			print("Transformation data progress: %d / %d, %d percentage" % (proggressForDataTransform, len(rowDataFromSensors), float(proggressForDataTransform) / float(len(rowDataFromSensors)) * float(100)))
 		proggressForDataTransform+=1
-		
-		# just for test
-		#if(len(transformedData) > 2000):
-		#	break
 	
 	# prepare data for Keras model train
 	dataForModelTrain = transformedData[:90000]

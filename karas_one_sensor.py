@@ -64,7 +64,7 @@ def PrepareKerasModel(dataForModelTrain):
 		trainY = []
 
 		for d in dataForModelTrain:
-			statusParkinga = float(d.isOcc)
+			statusParkinga = int(d.isOcc)
 			razlikaVektora = d.x1 - d.x2 + d.y1 - d.y2 + d.z1 - d.z2
 			trainX.append([d.x1, d.y1, d.z1, d.x2, d.y2, d.z2, d.temp, razlikaVektora])
 			trainY.append(statusParkinga)
@@ -96,7 +96,7 @@ def PrepareKerasModel(dataForModelTrain):
 
 def LoadDataFromCsvFile():
 	data = []
-	reader = csv.reader(open('data/jedan senzor 18000 podataka.csv', 'r'), delimiter=';')
+	reader = csv.reader(open('data/vector_data_nbps_one_sensor.csv', 'r'), delimiter=';')
 	# skip columns name
 	next(reader)
 	for row in reader:
@@ -131,17 +131,17 @@ def MakePrediction(model, dataForPrediction):
 		p = float(trainPredict[0][0])
 		#print("Parking event: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
 		
-		if(float(p) > float(0.50) and statusParkinga == 1):
+		if(float(p) > float(0.65) and statusParkinga == 1):
 			TotalOK+=1
-		elif (float(p) > float(0.50) and statusParkinga == 0):
+		elif (float(p) > float(0.65) and statusParkinga == 0):
 			TotalError+=1
 			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
-		elif (float(p) <= float(0.50) and statusParkinga == 0):
+		elif (float(p) <= float(0.65) and statusParkinga == 0):
 			TotalOK+=1
-		elif (float(p) > float(0.50) and statusParkinga == 0):
+		elif (float(p) > float(0.65) and statusParkinga == 0):
 			TotalError+=1
 			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
-		elif (float(p) < float(0.50) and statusParkinga == 1):
+		elif (float(p) < float(0.65) and statusParkinga == 1):
 			TotalError+=1
 			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
 
@@ -156,9 +156,9 @@ def main():
 	rowDataFromSensors = LoadDataFromCsvFile()
 
 	# prepare data for Keras model train
-	dataForModelTrain = rowDataFromSensors[:15000]
+	dataForModelTrain = rowDataFromSensors[:12000]
 	# rest of the data will be for prediction
-	dataForPrediction = rowDataFromSensors[15000:]
+	dataForPrediction = rowDataFromSensors[12000:]
 	#prepare model
 	model = PrepareKerasModel(dataForModelTrain)
 	#make prediction

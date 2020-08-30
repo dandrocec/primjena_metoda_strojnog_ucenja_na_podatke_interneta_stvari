@@ -82,7 +82,7 @@ def PrepareXGBoostModel(dataForModelTrain):
 
 def LoadDataFromCsvFile():
 	data = []
-	reader = csv.reader(open('data/jedan senzor 18000 podataka.csv', 'r'), delimiter=';')
+	reader = csv.reader(open('data/vector_data_nbps_one_sensor.csv', 'r'), delimiter=';')
 	# skip columns name
 	next(reader)
 	for row in reader:
@@ -115,9 +115,9 @@ def MakePrediction(model, dataForPrediction):
 		else:
 			TotalOK+=1
 
-	#model.get_booster().feature_names = ["X1", "Y1", "Z1", "X2", "Y2", "Z2", "Temperature", "Vector diff", "Sum XYZ"]
-	#plot_importance(model.get_booster())
-	#plt.show()
+	model.get_booster().feature_names = ["X1", "Y1", "Z1", "X2", "Y2", "Z2", "Temperature", "Vector diff", "Sum XYZ"]
+	plot_importance(model.get_booster())
+	plt.show()
 
 	print("Total Data: %d" % len(dataForPrediction))
 	print("Total OK: %d" % TotalOK)
@@ -131,9 +131,9 @@ def main():
 	#load data from CSV file
 	rowDataFromSensors = LoadDataFromCsvFile()
 	# prepare data for Keras model train
-	dataForModelTrain = rowDataFromSensors[:15000]
+	dataForModelTrain = rowDataFromSensors[:12000]
 	# rest of the data will be for prediction
-	dataForPrediction = rowDataFromSensors[15000:]
+	dataForPrediction = rowDataFromSensors[12000:]
 	#prepare model
 	model = PrepareXGBoostModel(dataForModelTrain)
 	#make XGBoost prediction

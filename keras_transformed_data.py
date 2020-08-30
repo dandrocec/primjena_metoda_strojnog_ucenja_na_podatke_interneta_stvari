@@ -85,7 +85,7 @@ Funkcija vraca n podataka koji zadovaoljavaju MAC adresu senzora i priblizni su 
 """
 def SearchByMacAndTemperature(mac, temperature, dataset, top):
 	tData = []
-	#dataset2 = dataset.sort(key = lambda c: c.date) TODO
+	#dataset2 = dataset.sort(key = lambda c: c.date)
 	for d in dataset:
 		if d.mac == mac and abs(temperature - d.temp) < 5 and len(tData) < top:
 			tData.append(d)
@@ -187,9 +187,6 @@ def MakePrediction(model, dataForPrediction):
 			TotalError+=1
 			print("Prediction error: %d %d %d %d %f" % (dp.x1,dp.y1,dp.z1, statusParkinga, p))
 
-	print(TotalOK)
-	print(TotalError)
-
 	print("Total OK: %d" % TotalOK)
 	print("Total error: %d" % TotalError)
 	print("Accuracy: %.2f%%" % round(float(TotalOK)/float(len(dataForPrediction))*float(100),2))
@@ -202,39 +199,23 @@ def main():
 	# transform row data from sensor
 	for row in rowDataFromSensors:	
 		tData = SearchByMacAndTemperature(row.mac, row.temp, rowDataFromSensors, 200)
-		if(len(tData) < 50):
-			continue
-		test = SearchForMostCommonValues(tData, 20)
 
-		diff = abs(row.x1-test.x1) + abs(row.y1-test.y1) + abs(row.z1-test.z1) 
-		if row.isOcc == 0 and diff >= 110:
-			#print("Bad sensor event: %d, %d, %d, IsOcc: %d" % (row.x1-test.x1, row.y1-test.y1, row.z1-test.z1, row.isOcc))
-			continue
-		elif row.isOcc == 1 and diff < 110:
-			#print("Bad sensor event: %d, %d, %d, IsOcc: %d" % (row.x1-test.x1, row.y1-test.y1, row.z1-test.z1, row.isOcc))
-			continue
+		test = SearchForMostCommonValues(tData, 20)
 
 		transformedData.append(TransformedData(row.mac, row.x1-test.x1, row.y1-test.y1, row.z1-test.z1, row.isOcc, row.date))
 
 		if(proggressForDataTransform % 100 == 0):
 			print("Transformation data progress: %d / %d, %d percentage" % (proggressForDataTransform, len(rowDataFromSensors), float(proggressForDataTransform) / float(len(rowDataFromSensors)) * float(100)))
 		proggressForDataTransform+=1
-		
-		#just for test
-		#if(len(transformedData) > 2000):
-		#	break
 	
 	# prepare data for Keras model train
 	dataForModelTrain = transformedData[:90000]
 	# rest of the data will be for prediction
 	dataForPrediction = transformedData[90000:]
-
+	# #prepare model
 	model = PrepareKerasModel(dataForModelTrain)
-
+	#make Keras prediction
 	MakePrediction(model, dataForPrediction)
-
-	#np_array = np.array(transformedData)
-	#pd.DataFrame(np_array).to_csv("temp_nbps.csv")
 
 
 if __name__=="__main__": 

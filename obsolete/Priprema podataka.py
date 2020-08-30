@@ -136,7 +136,7 @@ def PrepareKerasModel(dataForModelTrain):
 
 def LoadDataFromCsvFile():
 	data = []
-	reader = csv.reader(open('data/vector_data_nbps.csv', 'r'), delimiter=';')
+	reader = csv.reader(open('data/jedan senzor 18000 podataka.csv', 'r'), delimiter=';')
 	# skip columns name
 	next(reader)
 	for row in reader:
@@ -225,7 +225,7 @@ def main():
 		
 	#fid.close()
 	np_array = np.array(temp)
-	pd.DataFrame(np_array).to_csv("vuk.csv")
+	pd.DataFrame(np_array).to_csv("vuk 1 sens.csv")
 
 	#a = numpy.asarray(temp)
 	#numpy.savetxt("foo.csv", a, delimiter=" ")
